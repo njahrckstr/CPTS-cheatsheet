@@ -226,7 +226,10 @@ smbclient //<FQDN IP>/<share>
 rpcclient -U "" <FQDN IP>
 
 # Enumerating SMB shares using null session authentication.
-crackmapexec smb <FQDN/IP> --shares -u '' -p '' --shares
+netexec smb <FQDN/IP> --shares -u '' -p '' --shares
+
+# Enumerate share access with creds.
+netexec smb <FQDN/IP> -u <username> -p <password>
 ```
 ##### NFS
 ```
